@@ -49,6 +49,7 @@ import io.vertx.ext.shell.system.ExecStatus;
 import io.vertx.ext.shell.system.Job;
 import io.vertx.ext.shell.system.impl.InternalCommandManager;
 import io.vertx.ext.shell.system.impl.JobImpl;
+import io.vertx.ext.shell.term.Term;
 import io.vertx.ext.shell.term.impl.TermImpl;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
@@ -90,7 +91,11 @@ public class ShellTest {
   }
 
   private ShellImpl createShell(TestTtyConnection conn) {
-    return new ShellImpl(new TermImpl(vertx, conn), new InternalCommandManager(commands));
+    return createShell(new TermImpl(vertx, conn));
+  }
+
+  private ShellImpl createShell(Term term) {
+    return new ShellImpl(term, new InternalCommandManager(commands));
   }
 
   @Test
@@ -396,6 +401,34 @@ public class ShellTest {
             testContext.assertNull(conn.checkWritten("^C"));
             conn.read("\004");
             testContext.assertNull(conn.checkWritten("^D"));
+            async.complete();
+          }));
+        }
+      })
+      .onComplete(testContext.asyncAssertSuccess(id -> conn.read("foo\r")));
+  }
+
+  @Test
+  public void testEchoEnableDisable(TestContext testContext) throws Exception {
+    TestTtyConnection conn = new TestTtyConnection(vertx);
+    Term term = new TermImpl(vertx, conn);
+    ShellImpl shell = createShell(term);
+    shell.init().readline();
+    Async async = testContext.async();
+    vertx.deployVerticle(new AbstractVerticle() {
+        @Override
+        public void start() {
+          commands.add(CommandBuilder.command("foo").processHandler(process -> {
+            testContext.assertEquals(null, conn.checkWritten("% foo\n"));
+            conn.read("A");
+            testContext.assertNull(conn.checkWritten("A"));
+            term.setEchoOn(false);
+            conn.read("B");
+            testContext.assertNull(conn.checkWritten(""));
+            term.setEchoOn(true);
+            conn.out().setLength(0);
+            conn.read("C");
+            testContext.assertNull(conn.checkWritten("C"));
             async.complete();
           }));
         }
