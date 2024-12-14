@@ -33,6 +33,7 @@
 package io.vertx.ext.shell;
 
 import io.termd.core.tty.TtyEvent;
+import io.termd.core.util.Helper;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
@@ -420,14 +421,14 @@ public class ShellTest {
         public void start() {
           commands.add(CommandBuilder.command("foo").processHandler(process -> {
             testContext.assertEquals(null, conn.checkWritten("% foo\n"));
-            conn.read("A");
+            conn.getStdinHandler().accept(Helper.toCodePoints("A"));
             testContext.assertNull(conn.checkWritten("A"));
             term.setEchoOn(false);
-            conn.read("B");
+            conn.getStdinHandler().accept(Helper.toCodePoints("B"));
             testContext.assertNull(conn.checkWritten(""));
             term.setEchoOn(true);
             conn.out().setLength(0);
-            conn.read("C");
+            conn.getStdinHandler().accept(Helper.toCodePoints("C"));
             testContext.assertNull(conn.checkWritten("C"));
             async.complete();
           }));
