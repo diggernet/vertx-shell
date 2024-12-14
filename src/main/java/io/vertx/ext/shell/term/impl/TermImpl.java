@@ -67,6 +67,7 @@ public class TermImpl implements Term {
   private SignalHandler suspendHandler;
   private Session session;
   private boolean inReadline;
+  private boolean echoOn = true;
 
   public TermImpl(Vertx vertx, Keymap keymap, TtyConnection conn) {
     this(vertx, keymap, conn, null);
@@ -88,7 +89,9 @@ public class TermImpl implements Term {
     this.readlineFunctions.forEach(readline::addFunction);
     this.echoHandler = codePoints -> {
       // Echo
-      echo(codePoints);
+      if (echoOn) {
+        echo(codePoints);
+      }
       readline.queueEvent(codePoints);
     };
     conn.setStdinHandler(echoHandler);
@@ -120,6 +123,12 @@ public class TermImpl implements Term {
   @Override
   public Term setSession(Session session) {
     this.session = session;
+    return this;
+  }
+
+  @Override
+  public Term setEchoOn(boolean echoOn) {
+    this.echoOn = echoOn;
     return this;
   }
 

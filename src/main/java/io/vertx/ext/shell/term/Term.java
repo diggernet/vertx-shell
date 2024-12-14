@@ -78,6 +78,14 @@ public interface Term extends Tty {
   Term setSession(Session session);
 
   /**
+   * Enable or disable echoing input chars to the remote client in the default stdinHandler.
+   * 
+   * @param echoOn True to enable echo (default), false to disable.
+   * @return a reference to this, so the API can be used fluently
+   */
+  Term setEchoOn(boolean echoOn);
+
+  /**
    * Set an interrupt signal handler on the term.
    *
    * @param handler the interrupt handler
